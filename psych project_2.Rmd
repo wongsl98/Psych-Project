@@ -25,6 +25,10 @@ selection <- function(n, x, sd, s, m, strategy){
     # choices of selection strategy
     moran <- function(s,f){exp(s*f)/(sum(exp(s*f)))}
     moran.inverse <- function(s,f){1 - exp(s*f)/(sum(exp(s*f)))}
+    # AB: * don't need the brackets for definition on same line
+    #     * moran.inverse needs to use -fitness (-f)
+    #     * function definitions should be outside of 'selection' f'n
+    
     
     # selection distribution based on strategy (for some reason i can't get the if else statement to work i'm not sure why)
     # repro <- ifelse(strategy == 1, moran(s,fitness), moran.inverse(s,fitness))
@@ -33,6 +37,8 @@ selection <- function(n, x, sd, s, m, strategy){
     } else{
       repro <- moran.inverse(s,fitness)
     }
+    # AB: try giving strategy as logical (TRUE/FALSE) instead and can use ifelse...
+    #       ifelse(strategy, moran(s, fitness), moran.inverse(s, fitness))
     
   
     # mutation
