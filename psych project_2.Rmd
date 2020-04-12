@@ -1,0 +1,91 @@
+---
+title: "psych project_2"
+output: html_document
+---
+
+Base Code Functions
+```{r}
+set.seed(100)
+x <- seq(0,1,0.01)
+
+# n: number of agents, x: genotype, sd: standard deviation strategy, s: selection strength
+# m: mutation rate, strategy: moran or inverse moran
+
+selection <- function(n, x, sd, s, m, strategy){
+  # original genotype
+  base <- x
+
+  for (i in 1:10^3){
+    # phenotype based on Gaussian distribution
+    phenotype <- rnorm(n, mean = x, sd = sd)
+    
+    # fitness of population based on phenotype
+    fitness <- -abs(phenotype)
+    
+    # choices of selection strategy
+    moran <- function(s,f){exp(s*f)/(sum(exp(s*f)))}
+    moran.inverse <- function(s,f){1 - exp(s*f)/(sum(exp(s*f)))}
+    
+    # selection distribution based on strategy (for some reason i can't get the if else statement to work i'm not sure why)
+    # repro <- ifelse(strategy == 1, moran(s,fitness), moran.inverse(s,fitness))
+    if (strategy == 1){
+      repro <- moran(s,fitness)
+    } else{
+      repro <- moran.inverse(s,fitness)
+    }
+    
+  
+    # mutation
+    mutation <- sample(c(1,NA), 1, prob = c(m,1-m))
+    if(!is.null(mutation)) {
+      x[sample(n,1)] <- sample(base,1)
+    }
+    
+    # replacing of agent
+    dead.person <- sample(n,1)
+    new.person <- sample(x,1, prob = repro)
+    if (dead.person != new.person){
+      x[dead.person] <- new.person
+    } else{
+      x[dead.person] <- x[dead.person]
+    }
+  }
+  return(x)
+}
+
+```
+
+\section{Moran vs Inverse Moran}
+```{r}
+test <- selection(length(x), x, 1-x, 1, 0.05, 1)
+test2 <- selection(length(x), x, 1-x, 0, 0.05, 1)
+
+x <- seq(0,1,0.01)
+hist(test)
+hist(test2)
+```
+
+\section{Variance strategy}
+```{r}
+x <- seq(0,1,0.01)
+test <- selection(length(x), x, 1-x, 1, 0.05, 1)
+test2 <- selection(length(x), x, sqrt(1-x), 1, 0.05, 1)
+
+hist(test)
+hist(test2)
+```
+
+\section{Varying Selection Strength}
+```{r}
+x <- seq(0,1,0.01)
+test <- selection(length(x), x, 1-x, 1, 0.05, 1)
+test2 <- selection(length(x), x, sqrt(1-x), 0.75, 0.05, 1)
+test3 <- selection(length(x), x, sqrt(1-x), 0.5, 0.05, 1)
+test4 <- selection(length(x), x, sqrt(1-x), 0.25, 0.05, 1)
+
+hist(test)
+hist(test2)
+hist(test3)
+hist(test4)
+```
+
