@@ -8,6 +8,10 @@ Base Code Functions
 set.seed(100)
 x <- seq(0,1,0.01)
 
+# choices of selection strategy
+moran <- function(s,f) exp(s*f)/(sum(exp(s*f)))
+moran.inverse <- function(s,f) 1 - exp(s*(-f))/sum(exp(s*(-f)))
+
 # n: number of agents, x: genotype, sd: standard deviation strategy, s: selection strength
 # m: mutation rate, strategy: moran or inverse moran
 
@@ -22,21 +26,13 @@ selection <- function(n, x, sd, s, m, strategy){
     # fitness of population based on phenotype
     fitness <- -abs(phenotype)
     
-    # choices of selection strategy
-    moran <- function(s,f){exp(s*f)/(sum(exp(s*f)))}
-    moran.inverse <- function(s,f){1 - exp(s*f)/(sum(exp(s*f)))}
-    # AB: * don't need the brackets for definition on same line
-    #     * moran.inverse needs to use -fitness (-f)
-    #     * function definitions should be outside of 'selection' f'n
-    
-    
-    # selection distribution based on strategy (for some reason i can't get the if else statement to work i'm not sure why)
-    # repro <- ifelse(strategy == 1, moran(s,fitness), moran.inverse(s,fitness))
-    if (strategy == 1){
-      repro <- moran(s,fitness)
-    } else{
-      repro <- moran.inverse(s,fitness)
-    }
+    # selection distribution based on strategy (for some reason i can't get the if else statement to work i'm not sure why) // still doesn't seem to work
+    repro <- ifelse(strategy, moran(s,fitness), moran.inverse(s,fitness))
+    #if (strategy == 1){
+    #  repro <- moran(s,fitness)
+    #} else{
+    #  repro <- moran.inverse(s,fitness)
+    #}
     # AB: try giving strategy as logical (TRUE/FALSE) instead and can use ifelse...
     #       ifelse(strategy, moran(s, fitness), moran.inverse(s, fitness))
     
@@ -63,8 +59,8 @@ selection <- function(n, x, sd, s, m, strategy){
 
 \section{Moran vs Inverse Moran}
 ```{r}
-test <- selection(length(x), x, 1-x, 1, 0.05, 1)
-test2 <- selection(length(x), x, 1-x, 0, 0.05, 1)
+test <- selection(length(x), x, 1-x, 1, 0.05, TRUE)
+test2 <- selection(length(x), x, 1-x, 0, 0.05, FALSE)
 
 x <- seq(0,1,0.01)
 hist(test)
