@@ -15,43 +15,45 @@ moran.inverse <- function(s,f) 1 - exp(s*(-f))/sum(exp(s*(-f)))
 # n: number of agents, x: genotype, sd: standard deviation strategy, s: selection strength
 # m: mutation rate, strategy: moran or inverse moran
 
-selection <- function(n, x, sd, s, m, strategy){
+selection <- function(n, N, x, s, m, strategy) {
   # original genotype
   base <- x
 
-  for (i in 1:10^3){
+  for (i in 1:N){
     # phenotype based on Gaussian distribution
-    phenotype <- rnorm(n, mean = x, sd = sd)
+    phenotype <- rnorm(n, mean = x, sd = 1 - x)
     
     # fitness of population based on phenotype
     fitness <- -abs(phenotype)
     
-    # selection distribution based on strategy (for some reason i can't get the if else statement to work i'm not sure why) // still doesn't seem to work
-    repro <- ifelse(strategy, moran(s,fitness), moran.inverse(s,fitness))
-    #if (strategy == 1){
-    #  repro <- moran(s,fitness)
-    #} else{
-    #  repro <- moran.inverse(s,fitness)
-    #}
-    # AB: try giving strategy as logical (TRUE/FALSE) instead and can use ifelse...
-    #       ifelse(strategy, moran(s, fitness), moran.inverse(s, fitness))
-    
+    if (strategy) {
+     repro <- moran(s,fitness)
+    } else {
+     repro <- moran.inverse(s,fitness)
+    }
   
     # mutation
-    mutation <- sample(c(1,NA), 1, prob = c(m,1-m))
-    if(!is.null(mutation)) {
-      x[sample(n,1)] <- sample(base,1)
+    # mutation <- sample(c(1,NA), 1, prob = c(m,1-m))
+    # if(!is.null(mutation)) {
+    #   x[sample(n,1)] <- sample(base,1)
+    # }
+
+    # replacing of agent
+    dead.person <- sample(n, 1)
+    
+    if (runif(1) < m) { # mutation happens
+      x[dead.person] <- runif(1) # replace with random strategy
+    } else { # selection happens
+      new.person <- sample(n, 1, prob = repro)
+      x[dead.person] <- x[new.person]
     }
     
-    # replacing of agent
-    dead.person <- sample(n,1)
-    new.person <- sample(x,1, prob = repro)
-    if (dead.person != new.person){
-      x[dead.person] <- new.person
-    } else{
-      x[dead.person] <- x[dead.person]
-    }
+    # if (dead.person != new.person){
+    #   x[dead.person] <- x[new.person]
+    # } 
+    
   }
+  
   return(x)
 }
 
@@ -59,10 +61,10 @@ selection <- function(n, x, sd, s, m, strategy){
 
 \section{Moran vs Inverse Moran}
 ```{r}
-test <- selection(length(x), x, 1-x, 1, 0.05, TRUE)
-test2 <- selection(length(x), x, 1-x, 0, 0.05, FALSE)
-
 x <- seq(0,1,0.01)
+test <- selection(length(x), 10000, x, 100, .001, TRUE)
+test2 <- selection(length(x), 10000, x, 100, .001, FALSE)
+
 hist(test)
 hist(test2)
 ```
@@ -70,7 +72,7 @@ hist(test2)
 \section{Variance strategy}
 ```{r}
 x <- seq(0,1,0.01)
-test <- selection(length(x), x, 1-x, 1, 0.05, 1)
+test <- selection(length(x), x, 1-x, 10, 0.05, 1)
 test2 <- selection(length(x), x, sqrt(1-x), 1, 0.05, 1)
 
 hist(test)
