@@ -12,13 +12,13 @@ x <- seq(0,1,0.01)
 moran <- function(s,f) exp(s*f)/(sum(exp(s*f)))
 moran.inverse <- function(s,f) 1 - exp(s*(-f))/sum(exp(s*(-f)))
 
-# n: number of agents, x: genotype, sd: standard deviation strategy, s: selection strength
-# m: mutation rate, strategy: moran or inverse moran
+# n: number of agents, N: number of generations, x: genotype, s: selection strength
+# m: mutation rate, strategy: moran (TRUE) or inverse moran (FALSE)
 
 selection <- function(n, N, x, s, m, strategy) {
   # original genotype
-  base <- x
-
+  evolution <- matrix(, nrow = N/1000, ncol = n)
+  
   for (i in 1:N){
     # phenotype based on Gaussian distribution
     phenotype <- rnorm(n, mean = x, sd = 1 - x)
@@ -31,12 +31,6 @@ selection <- function(n, N, x, s, m, strategy) {
     } else {
      repro <- moran.inverse(s,fitness)
     }
-  
-    # mutation
-    # mutation <- sample(c(1,NA), 1, prob = c(m,1-m))
-    # if(!is.null(mutation)) {
-    #   x[sample(n,1)] <- sample(base,1)
-    # }
 
     # replacing of agent
     dead.person <- sample(n, 1)
@@ -48,13 +42,12 @@ selection <- function(n, N, x, s, m, strategy) {
       x[dead.person] <- x[new.person]
     }
     
-    # if (dead.person != new.person){
-    #   x[dead.person] <- x[new.person]
-    # } 
-    
+    if (i%%1000 == 0){
+      evolution[i/1000,] <- x
+    }
   }
   
-  return(x)
+  return(evolution)
 }
 
 ```
@@ -62,34 +55,27 @@ selection <- function(n, N, x, s, m, strategy) {
 \section{Moran vs Inverse Moran}
 ```{r}
 x <- seq(0,1,0.01)
-test <- selection(length(x), 10000, x, 100, .001, TRUE)
-test2 <- selection(length(x), 10000, x, 100, .001, FALSE)
+test <- selection(length(x), 100000, x, 100, .001, TRUE)
+test2 <- selection(length(x), 100000, x, 100, .001, FALSE)
 
-hist(test)
-hist(test2)
-```
-
-\section{Variance strategy}
-```{r}
-x <- seq(0,1,0.01)
-test <- selection(length(x), x, 1-x, 10, 0.05, 1)
-test2 <- selection(length(x), x, sqrt(1-x), 1, 0.05, 1)
-
-hist(test)
-hist(test2)
+hist(test[100,])
+plot(x = c(1:100), y = rowMeans(test), type = 'l')
+hist(test2[100,])
+plot(x = c(1:100), y = rowMeans(test2))
 ```
 
 \section{Varying Selection Strength}
 ```{r}
 x <- seq(0,1,0.01)
-test <- selection(length(x), x, 1-x, 1, 0.05, 1)
-test2 <- selection(length(x), x, sqrt(1-x), 0.75, 0.05, 1)
-test3 <- selection(length(x), x, sqrt(1-x), 0.5, 0.05, 1)
-test4 <- selection(length(x), x, sqrt(1-x), 0.25, 0.05, 1)
+test <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+test2 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+test3 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+test4 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
 
-hist(test)
-hist(test2)
-hist(test3)
-hist(test4)
+plot(x = c(1:100), y = rowMeans(test), type = 'l')
+plot(x = c(1:100), y = rowMeans(test2))
+plot(x = c(1:100), y = rowMeans(test3))
+plot(x = c(1:100), y = rowMeans(test4))
+
 ```
 
