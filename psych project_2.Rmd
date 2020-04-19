@@ -17,7 +17,8 @@ moran.inverse <- function(s,f) 1 - exp(s*(-f))/sum(exp(s*(-f)))
 
 selection <- function(n, N, x, s, m, strategy) {
   # original genotype
-  evolution <- matrix(, nrow = N/1000, ncol = n)
+  evolution <- matrix(, nrow = 1 + N/1000, ncol = n)
+  evolution[1,] <- x
   
   for (i in 1:N){
     # phenotype based on Gaussian distribution
@@ -43,7 +44,7 @@ selection <- function(n, N, x, s, m, strategy) {
     }
     
     if (i%%1000 == 0){
-      evolution[i/1000,] <- x
+      evolution[1 + i/1000,] <- x
     }
   }
   
@@ -58,24 +59,128 @@ x <- seq(0,1,0.01)
 test <- selection(length(x), 100000, x, 100, .001, TRUE)
 test2 <- selection(length(x), 100000, x, 100, .001, FALSE)
 
-hist(test[100,])
-plot(x = c(1:100), y = rowMeans(test), type = 'l')
-hist(test2[100,])
-plot(x = c(1:100), y = rowMeans(test2))
+plot(x = c(1:101), y = rowMeans(test), type = 'l')
+plot(x = c(1:101), y = rowMeans(test2))
 ```
 
-\section{Varying Selection Strength}
+\section{Varying Selection Strength - Moran}
 ```{r}
 x <- seq(0,1,0.01)
-test <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+test <- selection(length(x), 100000, x, 10, 0.001, TRUE)
 test2 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
-test3 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
-test4 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+test3 <- selection(length(x), 100000, x, 1000, 0.001, TRUE)
+test4 <- selection(length(x), 100000, x, 5000, 0.001, TRUE)
 
-plot(x = c(1:100), y = rowMeans(test), type = 'l')
-plot(x = c(1:100), y = rowMeans(test2))
-plot(x = c(1:100), y = rowMeans(test3))
-plot(x = c(1:100), y = rowMeans(test4))
+plot(x = c(1:101), y = rowMeans(test))
+plot(x = c(1:101), y = rowMeans(test2))
+plot(x = c(1:101), y = rowMeans(test3))
+plot(x = c(1:101), y = rowMeans(test4))
 
+```
+
+\section{Varying Selection Strength - Inverse Moran}
+
+```{r}
+x <- seq(0,1,0.01)
+test <- selection(length(x), 100000, x, 0.1, 0.001, FALSE)
+test2 <- selection(length(x), 100000, x, 1, 0.001, FALSE)
+test3 <- selection(length(x), 100000, x, 10, 0.001, FALSE)
+test4 <- selection(length(x), 100000, x, 100, 0.001, FALSE)
+
+plot(x = c(1:101), y = rowMeans(test))
+plot(x = c(1:101), y = rowMeans(test2))
+plot(x = c(1:101), y = rowMeans(test3))
+plot(x = c(1:101), y = rowMeans(test4))
+
+```
+
+\section{Testing extremes}
+
+```{r}
+x <- c(replicate(33,0), replicate(33,0.5), replicate(33,1))
+
+test <- selection(length(x), 100000, x, 10, 0.001, TRUE)
+test2 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+test3 <- selection(length(x), 100000, x, 1000, 0.001, TRUE)
+test4 <- selection(length(x), 100000, x, 5000, 0.001, TRUE)
+
+plot(x = c(1:101), y = rowMeans(test))
+plot(x = c(1:101), y = rowMeans(test2))
+plot(x = c(1:101), y = rowMeans(test3))
+plot(x = c(1:101), y = rowMeans(test4))
+```
+
+\section{Testing extremes - Inverse Moran}
+
+```{r}
+x <- c(replicate(33,0), replicate(33,0.5), replicate(33,1))
+
+test <- selection(length(x), 100000, x, 0.1, 0.001, FALSE)
+test2 <- selection(length(x), 100000, x, 1, 0.001, FALSE)
+test3 <- selection(length(x), 100000, x, 10, 0.001, FALSE)
+test4 <- selection(length(x), 100000, x, 100, 0.001, FALSE)
+
+plot(x = c(1:101), y = rowMeans(test))
+plot(x = c(1:101), y = rowMeans(test2))
+plot(x = c(1:101), y = rowMeans(test3))
+plot(x = c(1:101), y = rowMeans(test4))
+```
+
+\section{Varying SD Strategy}
+
+```{r}
+
+# choices of selection strategy
+moran <- function(s,f) exp(s*f)/(sum(exp(s*f)))
+moran.inverse <- function(s,f) 1 - exp(s*(-f))/sum(exp(s*(-f)))
+
+# n: number of agents, N: number of generations, x: genotype, s: selection strength
+# m: mutation rate, strategy: moran (TRUE) or inverse moran (FALSE)
+
+selection2 <- function(n, N, x, s, m, strategy) {
+  # original genotype
+  evolution <- matrix(, nrow = 1 + N/1000, ncol = n)
+  evolution[1,] <- x
+  
+  for (i in 1:N){
+    # phenotype based on Gaussian distribution
+    phenotype <- rnorm(n, mean = x, sd = sqrt(1 - x))
+    
+    # fitness of population based on phenotype
+    fitness <- -abs(phenotype)
+    
+    if (strategy) {
+     repro <- moran(s,fitness)
+    } else {
+     repro <- moran.inverse(s,fitness)
+    }
+
+    # replacing of agent
+    dead.person <- sample(n, 1)
+    
+    if (runif(1) < m) { # mutation happens
+      x[dead.person] <- runif(1) # replace with random strategy
+    } else { # selection happens
+      new.person <- sample(n, 1, prob = repro)
+      x[dead.person] <- x[new.person]
+    }
+    
+    if (i%%1000 == 0){
+      evolution[1 + i/1000,] <- x
+    }
+  }
+  
+  return(evolution)
+}
+```
+
+```{r}
+x <- seq(0,1,0.01)
+
+test <- selection(length(x), 100000, x, 100, .001, TRUE)
+test2 <- selection2(length(x), 100000, x, 100, .001, TRUE)
+
+plot(x = c(1:101), y = rowMeans(test))
+plot(x = c(1:101), y = rowMeans(test2))
 ```
 
