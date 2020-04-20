@@ -1,0 +1,69 @@
+---
+title: "Adam's Replication Code"
+author: "Adam Bear"
+date: "4/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+source("utilities.R", local = TRUE)
+set.seed(123)
+theme_set(theme_classic())
+
+# Some constant parameters
+nAgents <- 50
+nGens <- 10000
+```
+
+## Binary Strategy Space
+
+Let's start simulations for strategies that are restricted to 0 or 1, i.e., unbiased with noise vs. biased without noise, respectively.
+
+```{r binary moran}
+binary_moran <- evolve(nAgents, nGens, s = 100, strat.round = 0)
+
+pivot_longer(binary_moran, -gen, names_to = "stat") %>% 
+  ggplot(aes(gen, value, linetype = stat)) + 
+  geom_line(size = .5) + 
+  labs(x = "Generation", y = element_blank(), linetype = element_blank()) +
+  theme(legend.position = "bottom")
+```
+
+Predictably, variance is favored over bias for a simple Moran process. What about if we invert the Moran process?
+
+```{r binary inverted}
+binary_inverted <- evolve(nAgents, nGens, s = 100, strat.round = 0, invert = TRUE)
+
+pivot_longer(binary_inverted, -gen, names_to = "stat") %>% 
+  ggplot(aes(gen, value, linetype = stat)) + 
+  geom_line(size = .2) + 
+  labs(x = "Generation", y = element_blank(), linetype = element_blank()) +
+  theme(legend.position = "bottom")
+```
+
+## Complex Strategy Space
+
+Now we consider 11 possible genotypes between 0 and 1. Here is the normal Moran process.
+
+```{r quintile moran}
+quintile_moran <- evolve(nAgents, nGens, s = 100, strat.round = 0)
+
+pivot_longer(quintile_moran, -gen, names_to = "stat") %>% 
+  ggplot(aes(gen, value, linetype = stat)) + 
+  geom_line(size = .5) + 
+  labs(x = "Generation", y = element_blank(), linetype = element_blank()) +
+  theme(legend.position = "bottom")
+```
+
+And here is the inverted Moran.
+
+```{r quintile inverted}
+quintile_inverted <- evolve(nAgents, nGens, s = 100, strat.round = 0, invert = TRUE)
+
+pivot_longer(quintile_inverted, -gen, names_to = "stat") %>% 
+  ggplot(aes(gen, value, linetype = stat)) + 
+  geom_line(size = .5) + 
+  labs(x = "Generation", y = element_blank(), linetype = element_blank()) +
+  theme(legend.position = "bottom")
+```
