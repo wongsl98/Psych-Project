@@ -15,7 +15,7 @@ moran <- function(s,f) {
   return(exp(s*f)/(sum(exp(s*f))))
 }
 moran.inverse <- function(s,f) {
-  f <- -f - max(f)
+  f <- -f - max(-f)
   return((1 - exp(s*(f))/sum(exp(s*(f))))/(length(f)-1))
 }
 
