@@ -14,6 +14,7 @@ theme_set(theme_classic())
 # Some constant parameters
 nAgents <- 50
 nGens <- 10000
+nSims <- 20
 s <- 100
 ```
 
@@ -22,9 +23,15 @@ s <- 100
 Let's start simulations for strategies that are restricted to 0 or 1, i.e., unbiased with noise vs. biased without noise, respectively.
 
 ```{r binary moran}
-binary_moran <- evolve(nAgents, nGens, s = s, strat.round = 0)
+binary_moran <- map_dfr(seq_len(nSims),
+  ~evolve(nAgents, nGens, s = s, strat.round = 0)
+)
 
-pivot_longer(binary_moran, -gen, names_to = "stat") %>% 
+binary_moran %>% 
+  group_by(gen) %>% 
+  summarize(across(everything(), mean)) %>% 
+  ungroup() %>% 
+  pivot_longer(-gen, names_to = "stat") %>% 
   ggplot(aes(gen, value, linetype = stat)) + 
   geom_line(size = .5) + 
   labs(x = "Generation", linetype = element_blank()) +
@@ -35,9 +42,15 @@ pivot_longer(binary_moran, -gen, names_to = "stat") %>%
 Predictably, variance is favored over bias for a simple Moran process. What about if we invert the Moran process?
 
 ```{r binary inverted}
-binary_inverted <- evolve(nAgents, nGens, s = s, strat.round = 0, invert = TRUE)
-
-pivot_longer(binary_inverted, -gen, names_to = "stat") %>% 
+binary_inverted <- map_dfr(seq_len(nSims),
+  ~evolve(nAgents, nGens, s = s, strat.round = 0, invert = TRUE)
+)
+  
+binary_inverted %>% 
+  group_by(gen) %>% 
+  summarize(across(everything(), mean)) %>% 
+  ungroup() %>% 
+  pivot_longer(-gen, names_to = "stat") %>% 
   ggplot(aes(gen, value, linetype = stat)) + 
   geom_line(size = .2) + 
   labs(x = "Generation", linetype = element_blank()) +
@@ -50,9 +63,15 @@ pivot_longer(binary_inverted, -gen, names_to = "stat") %>%
 Now we consider 11 possible genotypes between 0 and 1. Here is the normal Moran process.
 
 ```{r quintile moran}
-quintile_moran <- evolve(nAgents, nGens, s = s, strat.round = 1)
+quintile_moran <- map_dfr(seq_len(nSims),
+  ~evolve(nAgents, nGens, s = s, strat.round = 1)
+)
 
-pivot_longer(quintile_moran, -gen, names_to = "stat") %>% 
+quintile_moran %>% 
+  group_by(gen) %>% 
+  summarize(across(everything(), mean)) %>% 
+  ungroup() %>% 
+  pivot_longer(-gen, names_to = "stat") %>% 
   ggplot(aes(gen, value, linetype = stat)) + 
   geom_line(size = .5) + 
   labs(x = "Generation", y = element_blank(), linetype = element_blank()) +
@@ -63,9 +82,15 @@ pivot_longer(quintile_moran, -gen, names_to = "stat") %>%
 And here is the inverted Moran.
 
 ```{r quintile inverted}
-quintile_inverted <- evolve(nAgents, nGens, s = s, strat.round = 1, invert = TRUE)
+quintile_inverted <- map_dfr(seq_len(nSims), 
+  ~evolve(nAgents, nGens, s = s, strat.round = 1, invert = TRUE)
+)
 
-pivot_longer(quintile_inverted, -gen, names_to = "stat") %>% 
+quintile_inverted %>% 
+  group_by(gen) %>% 
+  summarize(across(everything(), mean)) %>% 
+  ungroup() %>%   
+  pivot_longer(-gen, names_to = "stat") %>% 
   ggplot(aes(gen, value, linetype = stat)) + 
   geom_line(size = .5) + 
   labs(x = "Generation", linetype = element_blank()) +
