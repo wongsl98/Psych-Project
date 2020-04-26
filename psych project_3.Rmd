@@ -1,0 +1,267 @@
+---
+title: "psych project_3"
+author: "Shi Le Wong"
+date: "4/26/2020"
+output: html_document
+---
+
+Base Code Functions
+```{r base code}
+set.seed(100)
+
+# choices of selection strategy
+moran <- function(s,f) {
+  f <- f - max(f)
+  return(exp(s*f)/(sum(exp(s*f))))
+}
+moran.inverse <- function(s,f) {
+  f <- -f - max(f)
+  return((1 - exp(s*(f))/sum(exp(s*(f))))/(length(f)-1))
+}
+
+# n: number of agents, N: number of generations, x: genotype, s: selection strength
+# m: mutation rate, strategy: moran (TRUE) or inverse moran (FALSE)
+
+selection <- function(n, N, x, s, m, strategy) {
+  # original genotype
+  evolution <- matrix(, nrow = 1 + N/1000, ncol = n)
+  evolution[1,] <- x
+  
+  for (i in 1:N){
+    # phenotype based on Gaussian distribution
+    phenotype <- rnorm(n, mean = x, sd = 1 - x)
+    
+    # fitness of population based on phenotype
+    fitness <- -abs(phenotype)
+    
+    if (strategy) {
+     repro <- moran(s,fitness)
+    } else {
+     repro <- moran.inverse(s,fitness)
+    }
+
+    # replacing of agent
+    dead.person <- sample(n, 1)
+    
+    if (runif(1) < m) { # mutation happens
+      x[dead.person] <- sample(evolution[1,], 1) # replace with random strategy
+    } else { # selection happens
+      new.person <- sample(n, 1, prob = repro)
+      x[dead.person] <- x[new.person]
+    }
+    
+    #evolution[i+1,] <- x
+    if (i%%1000 == 0){
+      evolution[1 + i/1000,] <- x
+    }
+  }
+  
+  return(evolution)
+}
+
+```
+
+\pagebreak
+\section{Restricted Strategies - Moran}
+
+We begin with a simulation using a set of strategies restricted to either 0 (no bias with noise) or 1 (bias with no noise).
+
+```{r binary moran}
+x <- c(replicate(50,0), replicate(50,1))
+
+binary.moran <- selection(length(x), 100000, x, 100, 0.01, TRUE)
+
+plot(x = c(1:101), y = rowMeans(binary.moran), type = 'l', main = 'Restricted Strategies - Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+As predicted, the moran process selected for the no bias strategy over variance strategy.
+
+\section{Restricted Strategies - Inverse Moran}
+
+We repeat the simulation with restricted strategies for the Inverse Moran process.
+
+```{r binary inverse moran}
+x <- c(replicate(50,0), replicate(50,1))
+
+binary.inverse <- selection(length(x), 100000, x, 100, 0.01, FALSE)
+
+plot(x = c(1:101), y = rowMeans(binary.inverse), type = 'l', main = 'Restricted Strategies - Inverse Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+Again, as expected, the inverse moran process favored the variance strategy over the bias strategy. Both simulations consistent, clear proof of the convergence after running several times, and hence conclusion is fairly robust in the binary case.
+
+\pagebreak
+\section{Strategy Range}
+Next, we compare the moran and inverse moran process for a range of strategies. We have 101 possible genotypes between 0 and 1.
+
+```{r quintile}
+x <- seq(0,1,0.01)
+quintile.moran <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+quintile.inverse <- selection(length(x), 100000, x, 100, 0.001, FALSE)
+
+plot(x = c(1:101), y = rowMeans(quintile.moran), type = 'l', main = 'Strategy Range - Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(quintile.inverse), type = 'l', main = 'Strategy Range - Inverse Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+The results from the binary case still carries into this portion, where the moran process favored strategies with lower bias (below 0.5) and the inverse moran favored strategies with higher bias (above 0.5).
+
+\pagebreak
+\section{Varying Selection Strength - Moran}
+
+Working with the range of strategies again, we vary selection strength for the moran process to see the effects (if any) of selection strength.
+
+```{r selection strength moran}
+x <- seq(0,1,0.01)
+moran1 <- selection(length(x), 100000, x, 10, 0.001, TRUE)
+moran2 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+moran3 <- selection(length(x), 100000, x, 1000, 0.001, TRUE)
+moran4 <- selection(length(x), 100000, x, 5000, 0.001, TRUE)
+
+plot(x = c(1:101), y = rowMeans(moran1), type = 'l', main = 'Moran: s = 10', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(moran2), type = 'l', main = 'Moran: s = 100', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(moran3), type = 'l', main = 'Moran: s = 1000', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(moran4), type = 'l', main = 'Moran: s = 5000', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+Despite increasing the selection strength in magnitudes of 10, there is no obvious difference in strategies selected (mean of strategies hovered around 0.35 - 0.40).
+
+\pagebreak
+\section{Varying Selection Strength - Inverse Moran}
+
+We repeat the simulation to vary selection strength for the inverse moran process. Note that due to the formula used for the inverse moran process, selection strengths are in much smaller magnitudes of 10 to keep the fitness probabilities in range.
+
+```{r selection strength inverse}
+x <- seq(0,1,0.01)
+i.moran1 <- selection(length(x), 100000, x, 0.1, 0.001, FALSE)
+i.moran2 <- selection(length(x), 100000, x, 1, 0.001, FALSE)
+i.moran3 <- selection(length(x), 100000, x, 10, 0.001, FALSE)
+i.moran4 <- selection(length(x), 100000, x, 100, 0.001, FALSE)
+
+plot(x = c(1:101), y = rowMeans(i.moran1), type = 'l', main = 'Inverse Moran: s = 0.1', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(i.moran2), type = 'l', main = 'Inverse Moran: s = 1', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(i.moran3), type = 'l', main = 'Inverse Moran: s = 10', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(i.moran4), type = 'l', main = 'Inverse Moran: s = 100', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+Selection strength does not make a significant difference, and selection strategies were within the range of 0.80 to 1.0.
+
+\pagebreak
+\section{Varying Mutation Rates - Moran}
+
+For this section, we investigate the effects of different mutation rates on selection.
+```{r mutation strength moran}
+x <- seq(0,1,0.01)
+m.moran1 <- selection(length(x), 100000, x, 100, 0.001, TRUE)
+m.moran2 <- selection(length(x), 100000, x, 100, 0.01, TRUE)
+m.moran3 <- selection(length(x), 100000, x, 100, 0.1, TRUE)
+
+plot(x = c(1:101), y = rowMeans(m.moran1), type = 'l', main = 'Moran: m = .001', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(m.moran2), type = 'l', main = 'Moran: m = .01', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(m.moran3), type = 'l', main = 'Moran: m = .1', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+The higher the mutation rate, the greater the variation in later generations. However, the selection strength still does converge within the vicinity of the lowest mutation rate.
+
+\pagebreak
+\section{Varying Mutation Rates - Inverse Moran}
+
+For this section, we investigate the effects of different mutation rates on selection.
+```{r mutation strength inverse moran}
+x <- seq(0,1,0.01)
+m.imoran1 <- selection(length(x), 100000, x, 100, 0.001, FALSE)
+m.imoran2 <- selection(length(x), 100000, x, 100, 0.01, FALSE)
+m.imoran3 <- selection(length(x), 100000, x, 100, 0.1, FALSE)
+
+plot(x = c(1:101), y = rowMeans(m.imoran1), type = 'l', main = 'Inverse Moran: m = .001', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(m.imoran2), type = 'l', main = 'Inverse Moran: m = .01', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(m.imoran3), type = 'l', main = 'Inverse Moran: m = .1', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+Again, the higher the mutation rate, the greater the variation in generations. However, the selection strength still does converge within the vicinity of the lowest mutation rate for a mutation rate of 0.01. The convergence is less obvious and fluctuates around a strategy of 0.50 instead for mutation rate of 0.1.
+
+\pagebreak
+\section{Varying SD Strategy}
+
+Next, we experiment with a change in standard deviation/variance strategy. The variance strategy from before was $(1-x)^2$, where x was the bias. Here, we work with a variance of $(1-x)$, so there is a linear correlation between bias and variance.
+
+```{r base code modified SD}
+
+# choices of selection strategy
+moran <- function(s,f) {
+  f <- f - max(f)
+  return(exp(s*f)/(sum(exp(s*f))))
+}
+moran.inverse <- function(s,f) {
+  f <- -f - max(f)
+  return((1 - exp(s*(f))/sum(exp(s*(f))))/(length(f)-1))
+}
+
+# n: number of agents, N: number of generations, x: genotype, s: selection strength
+# m: mutation rate, strategy: moran (TRUE) or inverse moran (FALSE)
+
+selection2 <- function(n, N, x, s, m, strategy) {
+  # original genotype
+  evolution <- matrix(, nrow = 1 + N/1000, ncol = n)
+  evolution[1,] <- x
+  
+  for (i in 1:N){
+    # phenotype based on Gaussian distribution
+    phenotype <- rnorm(n, mean = x, sd = sqrt(1 - x))
+    
+    # fitness of population based on phenotype
+    fitness <- -abs(phenotype)
+    
+    if (strategy) {
+     repro <- moran(s,fitness)
+    } else {
+     repro <- moran.inverse(s,fitness)
+    }
+
+    # replacing of agent
+    dead.person <- sample(n, 1)
+    
+    if (runif(1) < m) { # mutation happens
+      x[dead.person] <- sample(evolution[1,],1) # replace with random strategy
+    } else { # selection happens
+      new.person <- sample(n, 1, prob = repro)
+      x[dead.person] <- x[new.person]
+    }
+    
+    if (i%%1000 == 0){
+      evolution[1 + i/1000,] <- x
+    }
+  }
+  
+  return(evolution)
+}
+```
+
+For the Moran process:
+```{r}
+x <- seq(0,1,0.01)
+
+sd.moran1 <- selection(length(x), 100000, x, 100, .001, TRUE)
+sd.moran2 <- selection2(length(x), 100000, x, 100, .001, TRUE)
+
+plot(x = c(1:101), y = rowMeans(sd.moran1), type = 'l', main = 'SD 1: Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(sd.moran2), type = 'l', main = 'SD 2: Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+For the Inverse Moran process:
+```{r}
+x <- seq(0,1,0.01)
+
+sd.imoran1 <- selection(length(x), 100000, x, 100, .001, FALSE)
+sd.imoran2 <- selection2(length(x), 100000, x, 100, .001, FALSE)
+
+plot(x = c(1:101), y = rowMeans(sd.imoran1), type = 'l', main = 'SD 1: Inverse Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+plot(x = c(1:101), y = rowMeans(sd.imoran2), type = 'l', main = 'SD 2: Inverse Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
+There is no significant difference, although the difference in strategies may have been more pronounced.
+
+\pagebreak
+\section{Conclusion}
+We can make a relatively robust conclusion that the moran process favors a high variance strategy, and the inverse moran process favors a high bias strategy. This conclusion is proven in the binary case, as well as in the quintile case. Results also converge in the range of expected strategies (high bias: > 0.5, high variance: < 0.5) when varying other parameters, giving us confidence in the selection process.
+
+However, it is not obvious that the manipulation of other variables have significant effect on the selection process. There is room to explore this further through quantifying the changes, or introducing more sophisticated mechanisms to model it more closely to the real world (e.g. allow for "learning" of strategies).
