@@ -44,8 +44,3 @@ evolve <- function(nAgents, nGens, s = 1, m = .01, strat.round = 1, invert = FAL
 
   return(tibble(gen = 1:nGens, average = avg_strat, mode = modal_strat))
 }
-
-
-
-
-
