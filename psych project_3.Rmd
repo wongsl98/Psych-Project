@@ -88,6 +88,16 @@ x <- c(replicate(50,0), replicate(50,1))
 binary.inverse <- selection(length(x), 100000, x, 100, 0.01, FALSE)
 
 plot(x = c(1:101), y = rowMeans(binary.inverse), type = 'l', main = 'Restricted Strategies - Inverse Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+
+avg <- rowMeans(binary.inverse)
+
+for (i in 1:20){
+  binary.inverse2 <- selection(length(x), 100000, x, 100, 0.01, FALSE)
+  avg <- matrix(c(avg, rowMeans(binary.inverse2)), nrow = 101, ncol = i+1)
+}
+
+plot(x = c(1:101), y = rowMeans(avg), type = 'l', main = 'Restricted Strategies - Inverse Moran', xlab = 'Generations', ylab = 'Mean Strategy')
+
 ```
 
 Again, as expected, the inverse moran process favored the variance strategy over the bias strategy. Both simulations consistent, clear proof of the convergence after running several times, and hence conclusion is fairly robust in the binary case.
@@ -194,7 +204,7 @@ moran <- function(s,f) {
   return(exp(s*f)/(sum(exp(s*f))))
 }
 moran.inverse <- function(s,f) {
-  f <- -f - max(f)
+  f <- -f - max(-f)
   return((1 - exp(s*(f))/sum(exp(s*(f))))/(length(f)-1))
 }
 
