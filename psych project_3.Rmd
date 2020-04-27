@@ -2,7 +2,9 @@
 title: "psych project_3"
 author: "Shi Le Wong"
 date: "4/26/2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 Base Code Functions
