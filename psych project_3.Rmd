@@ -277,3 +277,75 @@ There is no significant difference, although the difference in strategies may ha
 We can make a relatively robust conclusion that the moran process favors a high variance strategy, and the inverse moran process favors a high bias strategy. This conclusion is proven in the binary case, as well as in the quintile case. Results also converge in the range of expected strategies (high bias: > 0.5, high variance: < 0.5) when varying other parameters, giving us confidence in the selection process.
 
 However, it is not obvious that the manipulation of other variables have significant effect on the selection process. There is room to explore this further through quantifying the changes, or introducing more sophisticated mechanisms to model it more closely to the real world (e.g. allow for "learning" of strategies).
+
+\pagebreak
+\section{Death Selection}
+```{r death selection}
+set.seed(100)
+
+# choices of selection strategy
+moran <- function(s,f) {
+  f <- f - max(f)
+  return(exp(s*f)/(sum(exp(s*f))))
+}
+moran.inverse <- function(s,f) {
+  f <- -f - max(-f)
+  return((1 - exp(s*(f))/sum(exp(s*(f))))/(length(f)-1))
+}
+
+# n: number of agents, N: number of generations, x: genotype, s: selection strength
+# m: mutation rate, strategy: moran (TRUE) or inverse moran (FALSE)
+
+death <- function(n, N, x, s, m, strategy) {
+  # original genotype
+  evolution <- matrix(, nrow = 1 + N, ncol = n)
+  evolution[1,] <- x
+  
+  for (i in 1:N){
+    # phenotype based on Gaussian distribution
+    phenotype <- rnorm(n, mean = x, sd = 1 - x)
+    
+    # fitness of population based on phenotype
+    fitness <- -abs(phenotype)
+    
+    if (strategy) {
+     repro <- moran(s,fitness)
+    } else {
+     repro <- moran.inverse(s,fitness)
+    }
+
+    # replacing of agent
+    dead.person <- sample(n, 1, prob = repro)
+    
+    if (runif(1) < m) { # mutation happens
+      x[dead.person] <- sample(evolution[1,], 1) # replace with random strategy
+    } else { # selection happens
+      new.person <- sample(n, 1)
+      x[dead.person] <- x[new.person]
+    }
+    
+    evolution[i+1,] <- x
+    #if (i%%1000 == 0){
+    #  evolution[1 + i/1000,] <- x
+    #}
+  }
+  
+  return(evolution)
+}
+
+```
+
+```{r}
+x <- c(replicate(50,0), replicate(50,1))
+
+binary.morandeath <- death(length(x), 1000, x, 10, 0.01, TRUE)
+
+plot(x = c(1:1001), y = rowMeans(binary.morandeath), type = 'l', main = 'Restricted Strategies - Moran Death', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+```{r}
+x <- seq(0,1,0.01)
+quintile.morandeath <- death(length(x), 1000, x, 10, 0.001, TRUE)
+
+plot(x = c(1:1001), y = rowMeans(quintile.morandeath), type = 'l', main = 'Strategy Range - Moran Death', xlab = 'Generations', ylab = 'Mean Strategy')
+```
+
