@@ -1,0 +1,48 @@
+---
+title: "Simulated Minima"
+author: "Adam Bear"
+date: "5/31/2020"
+output: html_document
+---
+ 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+theme_set(theme_bw())
+set.seed(1234)
+```
+
+Consider a subset of strategies with $x \in [0, 1]$. What is the probability that each strategy is a *minimum*? What is the probability that each strategy is *not a maximum*? 
+
+```{r}
+nsims <- 200000
+strat_dif <- .01
+strats <- seq(0, 1, strat_dif)
+
+# function to spit out min strat & max strat
+get_min_max <- function(strats) {
+  draws <- abs(rnorm(length(strats), strats, 1 - strats))
+  tibble(
+    min_strat = strats[which.min(draws)], 
+    max_strat = strats[which.max(draws)]
+  )
+}
+
+results <- furrr::future_map_dfr(seq_len(nsims), ~get_min_max(strats))
+
+# plot results 
+results %>% 
+  pivot_longer(everything()) %>% 
+  ggplot(aes(value, ..count.. / (strat_dif * sum(..count..)), fill = name)) +
+  geom_bar(alpha = .5, position = position_dodge()) +
+  scale_x_continuous(
+    name = expression("Strategy ("*italic("x")*")"),
+    limits = c(0, 1),
+  ) + 
+  ylab("Density") +
+  scale_fill_discrete(name = element_blank(), labels = c("Max", "Min")) +
+  theme(legend.position = "bottom")
+```
+
+
