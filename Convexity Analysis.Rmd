@@ -10,5 +10,6 @@ convexity <- read.csv("~/Desktop/Shi-Le/Convexity Survey Validation_June 12, 202
 convexity <- convexity[-c(1,2),c(19:28)]
 convexity[] <- lapply(convexity,as.numeric)
 res <- cor(convexity)
+res
 ```
 
