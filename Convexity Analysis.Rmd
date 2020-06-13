@@ -1,0 +1,14 @@
+---
+title: "Convexity Analysis"
+author: "Shi Le Wong"
+date: "6/13/2020"
+output: html_document
+---
+
+```{r}
+convexity <- read.csv("~/Desktop/Shi-Le/Convexity Survey Validation_June 12, 2020_22.08.csv", header = TRUE)
+convexity <- convexity[-c(1,2),c(19:28)]
+convexity[] <- lapply(convexity,as.numeric)
+res <- cor(convexity)
+```
+
