@@ -8,8 +8,14 @@ output: html_document
 ```{r}
 convexity <- read.csv("~/Desktop/Shi-Le/Convexity Survey Validation_June 12, 2020_22.08.csv", header = TRUE)
 convexity <- convexity[-c(1,2),c(19:28)]
+convexity[] <- lapply(convexity,as.character)
 convexity[] <- lapply(convexity,as.numeric)
 res <- cor(convexity)
 res
+
+convexity[,c(2,4,6,8,10)] <- 8 - convexity[,c(2,4,6,8,10)]
+install.packages("psy")
+library("psy")
+cronbach(convexity)
 ```
 
