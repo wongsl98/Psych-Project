@@ -1,0 +1,41 @@
+﻿var_name,subscale,reverse_coded,question
+EI_1,Engagement,0,I like to rely on my intuitive impressions
+EI_10,Engagement,1,I don't like situations in which I have to rely on intuition
+EI_11,Engagement,0,I think there are times when one should rely on one's intuition
+EI_12,Engagement,1,I think it is foolish to make important decisions based on feelings
+EI_13,Engagement,1,I don't think it is a good idea to rely on one's intuition for important decisions
+EI_14,Engagement,1,I generally don't depend on my feelings to help me make decisions
+EI_15,Ability,0,I hardly ever go wrong when I listen to my deepest gut feelings to find an answer
+EI_16,Engagement,1,I would not want to depend on anyone who described himself or herself as intuitive
+EI_17,Ability,0,My snap judgments are probably not as good as most people's
+EI_18,Engagement,0,I tend to use my heart as a guide for my actions
+EI_19,Ability,0,"I can usually feel when a person is right or wrong, even if I can't explain how I know"
+EI_2,Ability,1,I don't have a very good sense of intuition
+EI_20,Ability,1,I suspect my hunches are inaccurate as often as they are accurate
+EI_3,Ability,0,Using my gut feelings usually works well for me in figuring out problems in my life
+EI_4,Ability,0,I believe in trusting my hunches
+EI_5,Engagement,0,Intuition can be a very useful way to solve problems
+EI_6,Engagement,0,I often go by my instincts when deciding on a course of action
+EI_7,Ability,0,I trust my initial feelings about people
+EI_8,Ability,0,"When it comes to trusting people, I can usually rely on my gut feelings"
+EI_9,Ability,1,"If I were to rely on my gut feelings, I would often make mistakes"
+RI_1,Engagement,1,I try to avoid situations that require thinking in depth about something
+RI_10,Engagement,0,I prefer complex problems to simple problems
+RI_11,Engagement,1,Thinking hard and for a long time about something gives me little satisfaction
+RI_12,Ability,1,I don't reason well under pressure
+RI_13,Ability,0,I am much better at figuring things out logically than most people
+RI_14,Ability,0,I have a logical mind
+RI_15,Engagement,0,I enjoy thinking in abstract terms
+RI_16,Ability,0,I have no problem thinking things through carefully
+RI_17,Ability,0,Using logic usually works well for me in figuring out problems in my life
+RI_18,Engagement,1,Knowing the answer without having to understand the reasoning behind it is good enough for me
+RI_19,Ability,0,"I usually have clear, explainable reasons for my decisions"
+RI_2,Ability,1,I'm not that good at figuring out complicated problems
+RI_20,Engagement,0,Learning new ways to think would be very appealing to me
+RI_3,Engagement,0,I enjoy intellectual challenges
+RI_4,Ability,1,I am not very good at solving problems that require careful logical analysis
+RI_5,Engagement,1,I don't like to have to do a lot of thinking
+RI_6,Engagement,0,I enjoy solving problems that require hard thinking
+RI_7,Engagement,1,Thinking is not my idea of an enjoyable activity
+RI_8,Ability,1,I am not a very analytical thinker
+RI_9,Ability,1,Reasoning things out carefully is not one of my strong points
