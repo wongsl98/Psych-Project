@@ -1,0 +1,36 @@
+---
+title: "Risk Survey Analysis"
+author: "Adam Bear"
+date: "7/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+
+# Raw Survey Data
+#df_raw <- read_csv("Risk_Strategy.csv")
+
+df_raw <- qualtRics::fetch_survey(
+  surveyID = "SV_eJ8x8NxuXeB4VjT",
+  force_request = TRUE,
+  verbose = FALSE,
+  label = FALSE,
+  convert = FALSE
+)
+```
+
+Let's create a new data frame with just participants who passed attention checks.
+
+```{r}
+df <- df_raw %>% 
+  filter( # attention checks
+    attn_check_exclude == 0,
+    Convexity_11 == -2,
+    REI_43 == 0
+  ) %>% 
+  rename(Convexity_Total = SC0, Risk_Total = SC1, Authoritarianism_Total = SC2)
+```
+
