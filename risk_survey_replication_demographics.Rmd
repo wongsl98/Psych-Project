@@ -1,0 +1,57 @@
+---
+title: "Risk Survey Replication Analysis"
+author: "Adam Bear"
+date: "7/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(pander)
+
+panderOptions('digits', 3)
+panderOptions('keep.trailing.zeros', TRUE)
+
+
+# Raw Survey Data
+df_raw <- qualtRics::fetch_survey(
+  surveyID = "SV_eCJtJv152Bnm873",
+  force_request = TRUE,
+  verbose = FALSE,
+  label = FALSE,
+  convert = FALSE
+)
+```
+
+Let's create a new data frame with just participants who passed attention checks and compute total scores.
+
+```{r}
+df <- df_raw %>% 
+  filter( # attention checks
+    attn_check_exclude == 0,
+    Convexity_11 == -2,
+    REI_43 == 0
+  ) %>% 
+  rename(Convexity_Total = SC0, Risk_Total = SC1, NFC_Total = SC2) %>% 
+  mutate(NFC_Total = NFC_Total - 80) # center the NFC measure
+```
+
+Here are the visualizations of how mean convexity varies with different demographic indicators.
+
+```{r}
+df %>%
+  gather(key = "key", value = "value", edu, income, neighborhood_current, neighborhood_growup) %>%
+  group_by(key, value) %>%
+  summarize(mean_convexity = mean(Convexity_Total)) %>%
+  pander()
+```
+
+```{r}
+df %>%
+  gather(key = "key", value = "value", rel, pol_party, social_cons, econ_cons) %>%
+  group_by(key, value) %>%
+  summarize(mean_convexity = mean(Convexity_Total)) %>%
+  pander()
+```

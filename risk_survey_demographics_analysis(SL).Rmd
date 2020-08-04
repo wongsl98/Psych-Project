@@ -68,17 +68,6 @@ df <- df_raw %>%
   
 ```
 
-Now we can look at the Pearson correlations between the major measures.
-
-```{r}
-df %>% 
-  select(ends_with("Total")) %>% 
-  drop_na() %>%
-  as.matrix() %>% 
-  cor() %>% 
-  pander()
-```
-
 What about correlation between Shi Le's scale and some demographics?
 
 ```{r}
