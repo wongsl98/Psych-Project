@@ -1,0 +1,118 @@
+---
+title: "Risk Survey Analysis"
+author: "Adam Bear"
+date: "7/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(pander)
+panderOptions('round', 2)
+panderOptions('keep.trailing.zeros', TRUE)
+
+
+# Raw Survey Data
+#df_raw <- read_csv("Risk_Strategy.csv")
+df_raw <- qualtRics::fetch_survey(
+  surveyID = "SV_eJ8x8NxuXeB4VjT",
+  force_request = TRUE,
+  verbose = FALSE,
+  label = FALSE,
+  convert = FALSE
+)
+
+# Key for REI names and reverse coding
+# EI = Faith in Intuition; RI = Need for Cognition
+rei_key <- read_csv("REI.csv") %>% 
+  separate(
+    var_name, 
+    c("scale", "item_num"),
+    sep = "_",
+    convert = TRUE,
+    remove = FALSE
+  ) %>% 
+  arrange(scale, item_num) 
+```
+
+Let's create a new data frame with just participants who passed attention checks and compute total scores.
+
+```{r}
+df <- df_raw %>% 
+  filter( # attention checks
+    attn_check_exclude == 0,
+    Convexity_11 == -2,
+    REI_43 == 0
+  ) %>% 
+  rename(Convexity_Total = SC0, Risk_Total = SC1, Authoritarianism_Total = SC2) %>% 
+  rename_with(~rei_key$var_name, REI_1:REI_42) %>% # fix REI names
+  mutate( 
+    across( # reverse code the proper EI & RI columns
+      rei_key %>% filter(reverse_coded == 1) %>% pull(var_name), 
+      ~ -1 * .
+    ),
+    across( # and reverse code the individualism items
+      str_c("individualism_", 8:15),
+      ~ -1 * .
+    )
+  ) %>% 
+  rowwise() %>% 
+  mutate( # create EI & RI total scores
+    EI_Total = sum(c_across(starts_with("EI"))),
+    RI_Total = sum(c_across(starts_with("RI"))),
+    Individualism_Total = sum(c_across(starts_with("individualism")))
+  ) %>% 
+  ungroup()
+  
+```
+
+Now we can look at the Pearson correlations between the major measures.
+
+```{r}
+df %>% 
+  select(ends_with("Total")) %>% 
+  drop_na() %>%
+  as.matrix() %>% 
+  cor() %>% 
+  pander()
+```
+
+What about correlation between Shi Le's scale and some demographics?
+
+```{r}
+df %>% 
+  select(
+    Convexity_Total, 
+    sex, age, edu, income, rel, pol_party, social_cons, econ_cons, neighborhood_current, neighborhood_growup
+  ) %>% 
+  drop_na() %>%
+  cor(method = "spearman") %>% 
+  pander()
+```
+
+```{r}
+df %>%
+  group_by(edu) %>%
+  summarize(mean_convexity = mean(Convexity_Total)) %>%
+  pander()
+```
+
+```{r}
+df %>%
+  gather(key = "key", value = "value", edu, income, neighborhood_current, neighborhood_growup) %>%
+  group_by(key, value) %>%
+  summarize(mean_convexity = mean(Convexity_Total)) %>%
+  pander()
+```
+
+
+```{r}
+df %>%
+  gather(key = "key", value = "value", rel, pol_party, social_cons, econ_cons) %>%
+  group_by(key, value) %>%
+  summarize(mean_convexity = mean(Convexity_Total)) %>%
+  pander()
+```
+
