@@ -77,9 +77,9 @@ df_orig <- df_raw %>%
   ) %>% 
   rowwise() %>% 
   mutate( # create EI & RI total scores
-    EI_Total = sum(c_across(starts_with("EI"))),
-    RI_Total = sum(c_across(starts_with("RI"))),
-    Individualism_Total = sum(c_across(starts_with("individualism")))
+    EI_Total = sum(c_across(starts_with("EI_"))),
+    RI_Total = sum(c_across(starts_with("RI_"))),
+    Individualism_Total = sum(c_across(starts_with("individualism_")))
   ) %>% 
   ungroup()
 ```
