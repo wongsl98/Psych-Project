@@ -122,7 +122,7 @@ df_combined %>%
 ```
 
 
-Filter by Neighborhood
+Filter by Neighborhood (Urban)
 ```{r}
 df_combined %>% 
   filter(neighborhood_growup == 1) %>%
@@ -131,4 +131,61 @@ df_combined %>%
   as.matrix() %>% 
   cor() %>% 
   pander()
+```
+Filter by Neighborhood (Suburban)
+```{r}
+df_combined %>% 
+  filter(neighborhood_growup == 2) %>%
+  select(Convexity_Total, Risk_Total, RI_Total) %>% 
+  drop_na() %>%
+  as.matrix() %>% 
+  cor() %>% 
+  pander()
+```
+
+Filter by Neighborhood (Rural)
+```{r}
+df_combined %>% 
+  filter(neighborhood_growup == 3) %>%
+  select(Convexity_Total, Risk_Total, RI_Total) %>% 
+  drop_na() %>%
+  as.matrix() %>% 
+  cor() %>% 
+  pander()
+```
+
+Linear Regression (between all three)
+```{r}
+lm1 <- lm(formula = Convexity_Total ~ neighborhood_growup + RI_Total, data = df_combined)
+summary(lm1)
+```
+
+Linear Regression (between Neighborhood and Convexity)
+```{r}
+lm2 <- lm(formula = Convexity_Total ~ neighborhood_growup, data = df_combined)
+summary(lm2)
+```
+
+Linear Regression (between Cognition and Convexity)
+```{r}
+lm3 <- lm(formula = Convexity_Total ~ RI_Total, data = df_combined)
+summary(lm3)
+```
+
+Linear Regression (between all three, convexity prior)
+```{r}
+lm4 <- lm(formula = RI_Total ~ Convexity_Total + neighborhood_growup, data = df_combined)
+summary(lm4)
+```
+
+Linear Regression (between neighborhood and cognition)
+```{r}
+lm5 <- lm(formula = RI_Total ~ neighborhood_growup, data = df_combined)
+summary(lm5)
+```
+
+Linear Regression (between convexity and cognition)
+```{r}
+lm6 <- lm(formula = RI_Total ~ Convexity_Total, data = df_combined)
+summary(lm6)
 ```
