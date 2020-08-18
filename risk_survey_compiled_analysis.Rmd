@@ -32,7 +32,10 @@ df_replication <- df_raw %>%
   ) %>% 
   rename_with(~rei_key$var_name[21:40], REI_23:REI_42) %>% # fix REI names
   rename(Convexity_Total = SC0, Risk_Total = SC1, RI_Total = SC2) %>%
-  mutate(RI_Total = RI_Total - 80) # center the NFC measure
+  mutate(
+    RI_Total = RI_Total - 80,
+    Neighborhood_Binary = if_else(neighborhood_growup == 3, 1, 0)
+  ) # center the NFC measure
 ```
 
 Downloading Original Risk Survey Data
@@ -79,7 +82,8 @@ df_orig <- df_raw %>%
   mutate( # create EI & RI total scores
     EI_Total = sum(c_across(starts_with("EI_"))),
     RI_Total = sum(c_across(starts_with("RI_"))),
-    Individualism_Total = sum(c_across(starts_with("individualism_")))
+    Individualism_Total = sum(c_across(starts_with("individualism_"))),
+    Neighborhood_Binary = if_else(neighborhood_growup == 3, 1, 0)
   ) %>% 
   ungroup()
 ```
@@ -156,13 +160,13 @@ df_combined %>%
 
 Linear Regression (between all three)
 ```{r}
-lm1 <- lm(formula = Convexity_Total ~ neighborhood_growup + RI_Total, data = df_combined)
+lm1 <- lm(formula = Convexity_Total ~ Neighborhood_Binary + RI_Total, data = df_combined)
 summary(lm1)
 ```
 
 Linear Regression (between Neighborhood and Convexity)
 ```{r}
-lm2 <- lm(formula = Convexity_Total ~ neighborhood_growup, data = df_combined)
+lm2 <- lm(formula = Convexity_Total ~ Neighborhood_Binary, data = df_combined)
 summary(lm2)
 ```
 
@@ -174,7 +178,7 @@ summary(lm3)
 
 Linear Regression (between all three, convexity prior)
 ```{r}
-lm4 <- lm(formula = RI_Total ~ Convexity_Total + neighborhood_growup, data = df_combined)
+lm4 <- lm(formula = RI_Total ~ Convexity_Total + Neighborhood_Binary, data = df_combined)
 summary(lm4)
 ```
 

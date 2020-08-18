@@ -62,7 +62,8 @@ df <- df_raw %>%
   mutate( # create EI & RI total scores
     EI_Total = sum(c_across(starts_with("EI"))),
     RI_Total = sum(c_across(starts_with("RI"))),
-    Individualism_Total = sum(c_across(starts_with("individualism")))
+    Individualism_Total = sum(c_across(starts_with("individualism"))),
+    Vertical_Ind_Total = sum(c_across(individualism_4:individualism_7))
   ) %>% 
   ungroup()
   
@@ -73,6 +74,7 @@ Now we can look at the Pearson correlations between the major measures.
 ```{r}
 df %>% 
   select(ends_with("Total")) %>% 
+  drop_na() %>%
   as.matrix() %>% 
   cor() %>% 
   pander()
@@ -84,8 +86,9 @@ What about correlation between Shi Le's scale and some demographics?
 df %>% 
   select(
     Convexity_Total, 
-    sex, age, income, rel, pol_party, social_cons, econ_cons
+    sex, age, edu, income, rel, pol_party, social_cons, econ_cons, neighborhood_current, neighborhood_growup
   ) %>% 
+  drop_na() %>%
   cor(method = "spearman") %>% 
   pander()
 ```
