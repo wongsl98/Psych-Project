@@ -158,15 +158,27 @@ df_combined %>%
   pander()
 ```
 
-Linear Regression (between all three)
+Linear Regression (between all three, neighborhood = binary)
 ```{r}
 lm1 <- lm(formula = Convexity_Total ~ Neighborhood_Binary + RI_Total, data = df_combined)
 summary(lm1)
 ```
 
-Linear Regression (between Neighborhood and Convexity)
+Linear Regression (between all three, neighborhood = non-binary)
+```{r}
+lm1 <- lm(formula = Convexity_Total ~ neighborhood_growup + RI_Total, data = df_combined)
+summary(lm1)
+```
+
+Linear Regression (between Neighborhood (binary) and Convexity)
 ```{r}
 lm2 <- lm(formula = Convexity_Total ~ Neighborhood_Binary, data = df_combined)
+summary(lm2)
+```
+
+Linear Regression (between Neighborhood (non-binary) and Convexity)
+```{r}
+lm2 <- lm(formula = Convexity_Total ~ neighborhood_growup, data = df_combined)
 summary(lm2)
 ```
 
@@ -176,13 +188,25 @@ lm3 <- lm(formula = Convexity_Total ~ RI_Total, data = df_combined)
 summary(lm3)
 ```
 
-Linear Regression (between all three, convexity prior)
+Linear Regression (between all three, convexity prior, neighborhood(binary))
 ```{r}
 lm4 <- lm(formula = RI_Total ~ Convexity_Total + Neighborhood_Binary, data = df_combined)
 summary(lm4)
 ```
 
-Linear Regression (between neighborhood and cognition)
+Linear Regression (between all three, convexity prior, neighborhood(non-binary))
+```{r}
+lm4 <- lm(formula = RI_Total ~ Convexity_Total + neighborhood_growup, data = df_combined)
+summary(lm4)
+```
+
+Linear Regression (between neighborhood (binary) and cognition)
+```{r}
+lm5 <- lm(formula = RI_Total ~ Neighborhood_Binary, data = df_combined)
+summary(lm5)
+```
+
+Linear Regression (between neighborhood (non-binary) and cognition)
 ```{r}
 lm5 <- lm(formula = RI_Total ~ neighborhood_growup, data = df_combined)
 summary(lm5)
