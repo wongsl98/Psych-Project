@@ -2,10 +2,13 @@
 title: "risk_survey_compiled_analysis"
 author: "Shi Le Wong"
 date: "8/15/2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
-Downloading Replication Survey Data
-```{r setup, include=FALSE}
+
+First, we download the Original Risk Survey Data.\
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
@@ -14,32 +17,6 @@ library(pander)
 panderOptions('digits', 3)
 panderOptions('keep.trailing.zeros', TRUE)
 
-
-# Raw Survey Data
-df_raw <- qualtRics::fetch_survey(
-  surveyID = "SV_eCJtJv152Bnm873",
-  force_request = TRUE,
-  verbose = FALSE,
-  label = FALSE,
-  convert = FALSE
-)
-
-df_replication <- df_raw %>% 
-  filter( # attention checks
-    attn_check_exclude == 0,
-    Convexity_11 == -2,
-    REI_43 == 0
-  ) %>% 
-  rename_with(~rei_key$var_name[21:40], REI_23:REI_42) %>% # fix REI names
-  rename(Convexity_Total = SC0, Risk_Total = SC1, RI_Total = SC2) %>%
-  mutate(
-    RI_Total = RI_Total - 80,
-    Neighborhood_Binary = if_else(neighborhood_growup == 3, 1, 0)
-  ) # center the NFC measure
-```
-
-Downloading Original Risk Survey Data
-```{r}
 df_raw <- qualtRics::fetch_survey(
   surveyID = "SV_eJ8x8NxuXeB4VjT",
   force_request = TRUE,
@@ -66,7 +43,7 @@ df_orig <- df_raw %>%
     Convexity_11 == -2,
     REI_43 == 0
   ) %>% 
-  rename(Convexity_Total = SC0, Risk_Total = SC1, Authoritarianism_Total = SC2) %>% 
+  rename(Convexity_Total = SC0, Risk_Total = SC1, Authoritarianism_Total = SC2, gender = sex) %>% 
   rename_with(~rei_key$var_name, REI_1:REI_42) %>% # fix REI names
   mutate( 
     across( # reverse code the proper EI & RI columns
@@ -88,12 +65,38 @@ df_orig <- df_raw %>%
   ungroup()
 ```
 
-Combining both datasets
+Then, we download the Replication Survey Data.\
+```{r}
+# Raw Survey Data
+df_raw <- qualtRics::fetch_survey(
+  surveyID = "SV_eCJtJv152Bnm873",
+  force_request = TRUE,
+  verbose = FALSE,
+  label = FALSE,
+  convert = FALSE
+)
+
+df_replication <- df_raw %>% 
+  filter( # attention checks
+    attn_check_exclude == 0,
+    Convexity_11 == -2,
+    REI_43 == 0
+  ) %>% 
+  rename_with(~rei_key$var_name[21:40], REI_23:REI_42) %>% # fix REI names
+  rename(Convexity_Total = SC0, Risk_Total = SC1, RI_Total = SC2) %>%
+  mutate(
+    RI_Total = RI_Total - 80,
+    Neighborhood_Binary = if_else(neighborhood_growup == 3, 1, 0)
+  ) # center the NFC measure
+```
+
+We combine both datasets into one.\
 ```{r}
 df_combined <- bind_rows(df_orig,df_replication)
 ```
 
-Correlation between Convexity, Risk and RI
+\subsection{Overall Analysis}
+We relook at the correlation between Convexity, Risk and RI (NFC).\
 ```{r}
 df_combined %>% 
   select(Convexity_Total, Risk_Total, RI_Total) %>% 
@@ -103,7 +106,8 @@ df_combined %>%
   pander()
 ```
 
-Convexity correlation with Neighborhood (Growing Up)
+\pagebreak
+We look at overall correlation between Convexity and Neighborhood (Growing Up). There seem to be an obvious trend, where urban neighborhoods (neighborhood index = 1) has the most positive Convexity score (wanting to be the best, also concave loss). Rural neighborhoods (neighborhood index = 3) has a negative/least positive Convexity score. This is in line with our predictions.\
 ```{r}
 df_combined %>%
   group_by(neighborhood_growup) %>%
@@ -114,7 +118,8 @@ df_combined %>%
   geom_text(aes(label=sprintf("%0.2f", round(mean_convexity, digits = 2))), vjust=0)
 ```
 
-Risk correlation with Neighborhood (Growing Up)
+\pagebreak
+We look at the correlation between Risk preference and Neighborhood (Growing Up). There isn't much of a trend or relationship based on our dataset.\
 ```{r}
 df_combined %>%
   group_by(neighborhood_growup) %>%
@@ -125,8 +130,10 @@ df_combined %>%
   geom_text(aes(label=sprintf("%0.2f", round(mean_risk, digits = 2))), vjust=0)
 ```
 
-
-Filter by Neighborhood (Urban)
+\pagebreak
+\subsection{Analysis by Neighborhoods}
+In this section, we look at correlations between Convexity, Risk and RI (NFC) along each type of neighborhood (growing up). The relationship between Convexity and Risk or Convexity and RI is highest for the rural neighborhood (higher than the overall).\ 
+Filter by Neighborhood (Urban)\
 ```{r}
 df_combined %>% 
   filter(neighborhood_growup == 1) %>%
@@ -136,7 +143,7 @@ df_combined %>%
   cor() %>% 
   pander()
 ```
-Filter by Neighborhood (Suburban)
+Filter by Neighborhood (Suburban)\
 ```{r}
 df_combined %>% 
   filter(neighborhood_growup == 2) %>%
@@ -147,7 +154,7 @@ df_combined %>%
   pander()
 ```
 
-Filter by Neighborhood (Rural)
+Filter by Neighborhood (Rural)\
 ```{r}
 df_combined %>% 
   filter(neighborhood_growup == 3) %>%
@@ -158,62 +165,150 @@ df_combined %>%
   pander()
 ```
 
-Linear Regression (between all three, neighborhood = binary)
+\pagebreak
+\subsection{Linear Regressions - Neighborhood Binary}
+\subsection{Neighborhood and RI Prior, to predict Convexity}
+
+First, we look at linear regression between all three variables: using Neighborhood type (growing up) and RI (NFC) to predict Convexity scores. Note that neighborhood is recategorized into 2 categories: Rural (neighborhood index = 3, binary index = 1) and Non-rural (neighborhood index = 1 or 2, binary index = 0).\
+
+Controlling for RI, the coefficient of neighborhood predicting for Convexity is negative, which aligns with our predictions (rural = lower convexity score). Controlling for neighborhood, there is a small, positive coefficient for RI predicting for Convexity. The p-value is relatively small (2.2e-16).\
+*Note: controlling for age and gender don't seem to make much of a difference; controlling for gender has a slightly bigger effect (of weakening the coefficient) than controlling for age.\
+
+\textbf{1. Linear Regression (between Neighborhood (binary), RI and Convexity)}\
 ```{r}
 lm1 <- lm(formula = Convexity_Total ~ Neighborhood_Binary + RI_Total, data = df_combined)
 summary(lm1)
 ```
 
-Linear Regression (between all three, neighborhood = non-binary)
-```{r}
-lm1 <- lm(formula = Convexity_Total ~ neighborhood_growup + RI_Total, data = df_combined)
-summary(lm1)
-```
+Without controlling for RI, the magnitude of the coefficient (predicting Convexity from Neighborhood) is larger, though the p-value increases as well. This may suggest that RI plays a mediating role, or that something else affecting RI is also affecting this relationship.\
 
-Linear Regression (between Neighborhood (binary) and Convexity)
+\textbf{2. Linear Regression (between Neighborhood (binary) and Convexity)}\
 ```{r}
 lm2 <- lm(formula = Convexity_Total ~ Neighborhood_Binary, data = df_combined)
 summary(lm2)
 ```
 
-Linear Regression (between Neighborhood (non-binary) and Convexity)
-```{r}
-lm2 <- lm(formula = Convexity_Total ~ neighborhood_growup, data = df_combined)
-summary(lm2)
-```
+Again, without controlling for neighborhood, the magnitude of the coefficient (predicting Convexity from RI) is very slightly larger, and the p-value remains the same. Assuming there is no significant change to the coefficient, it aligns with our prediction that neighborhood is prior to convexity/RI and is not a mediator in the relationship.\
 
-Linear Regression (between Cognition and Convexity)
+\textbf{3. Linear Regression (between Cognition and Convexity)}\
 ```{r}
 lm3 <- lm(formula = Convexity_Total ~ RI_Total, data = df_combined)
 summary(lm3)
 ```
 
-Linear Regression (between all three, convexity prior, neighborhood(binary))
+\pagebreak
+\subsection{Neighborhood and Convexity Prior, to predict RI}
+Next, we look at linear regression between all three variables: using Neighborhood type (growing up) and Convexity scores to predict RI (NFC).\
+
+Controlling for Convexity, the coefficient of neighborhood predicting for RI is a small, negative value (rural = lower NFC). Controlling for neighborhood, there is a small, positive coefficient for convexity predicting for RI. The p-value is relatively small (2.2e-16).\
+
+\textbf{4. Linear Regression (between all three, convexity prior, neighborhood(binary))}\
 ```{r}
 lm4 <- lm(formula = RI_Total ~ Convexity_Total + Neighborhood_Binary, data = df_combined)
 summary(lm4)
 ```
 
-Linear Regression (between all three, convexity prior, neighborhood(non-binary))
-```{r}
-lm4 <- lm(formula = RI_Total ~ Convexity_Total + neighborhood_growup, data = df_combined)
-summary(lm4)
-```
+Without controlling for convexity, the magnitude of coefficient of neighborhood predicting RI shoots up. This aligns with our predictions, in that convexity may be a mediator in the relationship between neighborhood and RI since controlling for convexity (in the earlier case) weakens this relationship. However, p-value in this case is much higher (~0.07).\
 
-Linear Regression (between neighborhood (binary) and cognition)
+\textbf{5. Linear Regression (between neighborhood (binary) and cognition)}\
 ```{r}
 lm5 <- lm(formula = RI_Total ~ Neighborhood_Binary, data = df_combined)
 summary(lm5)
 ```
 
-Linear Regression (between neighborhood (non-binary) and cognition)
+Without controlling for neighborhood, the coefficient of Convexity predicting for RI is only very slightly higher. Again, this may suggest that neighborhood is not a mediator of the relationship between convexity and RI.\
+
+\textbf{6. Linear Regression (between convexity and cognition)}\
+```{r}
+lm6 <- lm(formula = RI_Total ~ Convexity_Total, data = df_combined)
+summary(lm6)
+```
+
+\pagebreak
+\subsection{RI and Convexity Prior, to predict Neighborhood}
+Finally, we look at the linear regression between all three variables: using RI (NFC) and Convexity scores to predict Neighborhood type (growing up).\
+
+Controlling for Convexity or RI, the coefficients are both negative and of very small magnitude compared to earlier cases. The p-value is relatively small (0.002).\
+
+\textbf{7. Linear Regression (between all three, convexity and RI prior, neighborhood(binary))}\
+```{r}
+lm7 <- lm(formula = Neighborhood_Binary ~ Convexity_Total + RI_Total, data = df_combined)
+summary(lm7)
+```
+
+Without controlling for convexity, relationship between RI and neighborhood is slightly more positive, but still small in magnitude. This may suggest convexity is not a mediator in the relationship where RI is prior to neighborhood. It may also suggest that RI is not prior to neighborhood, since relationship remains small in magnitude. p-value is higher (0.07).\
+
+\textbf{8. Linear Regression (between neighborhood (binary) and cognition)}\
+```{r}
+lm8 <- lm(formula = Neighborhood_Binary ~ RI_Total, data = df_combined)
+summary(lm8)
+```
+
+Without controlling for RI, the coefficient of Convexity predicting for neighborhood is only very slightly higher. Again, this may suggest that RI is not a mediator of the relationship where convexity is prior to neighborhood, and that convexity may not be prior to neighborhood.\
+
+\textbf{9. Linear Regression (between convexity and neighborhood)}\
+```{r}
+lm9 <- lm(formula = Neighborhood_Binary ~ Convexity_Total, data = df_combined)
+summary(lm9)
+```
+
+\pagebreak
+\subsection{Linear Regressions - Neighborhood Non-Binary}
+
+The following linear models are the same as the previous section, except using the original neighborhood index. The results are similar, though the coefficients are slightly smaller but still in the same direction.\
+
+\textbf{1. Linear Regression (between all three, neighborhood = non-binary)}\
+```{r}
+lm1 <- lm(formula = Convexity_Total ~ neighborhood_growup + RI_Total, data = df_combined)
+summary(lm1)
+```
+
+\textbf{2. Linear Regression (between Neighborhood (non-binary) and Convexity)}\
+```{r}
+lm2 <- lm(formula = Convexity_Total ~ neighborhood_growup, data = df_combined)
+summary(lm2)
+```
+
+\textbf{3. Linear Regression (between Cognition and Convexity)}\
+```{r}
+lm3 <- lm(formula = Convexity_Total ~ RI_Total, data = df_combined)
+summary(lm3)
+```
+
+\pagebreak
+\textbf{4. Linear Regression (between all three, convexity prior, neighborhood(non-binary))}\
+```{r}
+lm4 <- lm(formula = RI_Total ~ Convexity_Total + neighborhood_growup, data = df_combined)
+summary(lm4)
+```
+
+\textbf{5. Linear Regression (between neighborhood (non-binary) and cognition)}\
 ```{r}
 lm5 <- lm(formula = RI_Total ~ neighborhood_growup, data = df_combined)
 summary(lm5)
 ```
 
-Linear Regression (between convexity and cognition)
+\textbf{6. Linear Regression (between convexity and cognition)}\
 ```{r}
 lm6 <- lm(formula = RI_Total ~ Convexity_Total, data = df_combined)
 summary(lm6)
+```
+
+\pagebreak
+\textbf{7. Linear Regression (between all three, convexity and RI prior, neighborhood(non-binary))}\
+```{r}
+lm7 <- lm(formula = neighborhood_growup ~ Convexity_Total + RI_Total, data = df_combined)
+summary(lm7)
+```
+
+\textbf{8. Linear Regression (between neighborhood (binary) and cognition)}\
+```{r}
+lm8 <- lm(formula = neighborhood_growup ~ RI_Total, data = df_combined)
+summary(lm8)
+```
+
+\textbf{9. Linear Regression (between convexity and neighborhood)}\
+```{r}
+lm9 <- lm(formula = neighborhood_growup ~ Convexity_Total, data = df_combined)
+summary(lm9)
 ```
